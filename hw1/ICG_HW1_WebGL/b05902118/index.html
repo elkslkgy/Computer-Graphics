@@ -1,0 +1,972 @@
+<html>
+
+<head>
+<title>ICG WebGL &mdash; HW1</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script id="fragmentShader0" type="fragment">
+    precision mediump float;
+    varying vec4 fragcolor;
+    void main(void) {
+        gl_FragColor = fragcolor;
+    }
+</script>
+
+<script id="vertexShader0" type="vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec3 aFrontColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+	 varying vec4 fragcolor;
+    uniform sampler2D uSampler;
+
+    void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		fragcolor = vec4(aFrontColor.rgb, 1.0);
+    }
+</script>
+
+<script id="fragmentShader1" type="fragment">
+   #extension GL_OES_standard_derivatives: enable
+   precision mediump float;
+
+   varying vec4 fragcolor;
+
+   // Light Position / Direction
+   varying vec3 vPosition;
+   varying vec3 vLightDirection1;
+   varying vec3 vLightDirection2;
+   varying vec3 vLightDirection3;
+
+   // Light ambient / diffuse / specular
+   uniform vec4 uLightAmbient;
+   uniform vec4 uLightDiffuse;
+   uniform vec4 uLightSpecular;
+
+   // Params to tune
+   float Ka = 0.5;
+   float Kd = 0.9;
+   float Ks = 0.8;
+   float materialShininess = 0.4;
+
+   void main(void){
+      //partial derivative & normal & direction of position
+      vec3 dx = vec3(dFdx(vPosition));
+      vec3 dy = vec3(dFdy(vPosition));
+      vec3 n = normalize(cross(dx, dy));
+      vec3 l1 = normalize(vLightDirection1);
+      vec3 l2 = normalize(vLightDirection2);
+      vec3 l3 = normalize(vLightDirection3);
+
+      vec3 eyeDirection = normalize(-vPosition);
+      vec3 reflectionDirection1 = reflect(-l1, n);
+      vec3 reflectionDirection2 = reflect(-l2, n);
+      vec3 reflectionDirection3 = reflect(-l3, n);
+      
+      // if light doesn't go to our eyes, then set to zero, cause we won't see it.
+      float specularWeight1 = pow(max(dot(reflectionDirection1, eyeDirection), 0.0), materialShininess);
+      float specularWeight2 = pow(max(dot(reflectionDirection2, eyeDirection), 0.0), materialShininess);
+      float specularWeight3 = pow(max(dot(reflectionDirection3, eyeDirection), 0.0), materialShininess);
+      float diffuseWeight1 = max(dot(n, l1), 0.0);
+      float diffuseWeight2 = max(dot(n, l2), 0.0);
+      float diffuseWeight3 = max(dot(n, l3), 0.0);
+
+      vec3 lightWeight = (uLightAmbient * Ka + uLightDiffuse * (diffuseWeight1 + diffuseWeight2 + diffuseWeight3) * Kd + uLightSpecular * (specularWeight1 + specularWeight2 + specularWeight3) * Ks).rgb;
+      
+      gl_FragColor = vec4(lightWeight * fragcolor.rgb, fragcolor.a);
+   }
+</script>
+
+<script id="vertexShader1" type="vertex">
+   attribute vec3 aVertexPosition;
+   attribute vec3 aFrontColor;
+   attribute vec3 aVertexNormal;
+
+   uniform mat4 uMVMatrix;
+   uniform mat4 uPMatrix;
+
+   uniform vec3 uLightPosition1;
+   uniform vec3 uLightPosition2;
+   uniform vec3 uLightPosition3;
+
+   varying vec3 vPosition;
+   varying vec3 vLightDirection1;
+   varying vec3 vLightDirection2;
+   varying vec3 vLightDirection3;
+
+   varying vec4 fragcolor;
+   uniform sampler2D uSampler;
+
+   void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      vPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
+      vLightDirection1 = uLightPosition1 - vPosition;
+      vLightDirection2 = uLightPosition2 - vPosition;
+      vLightDirection3 = uLightPosition3 - vPosition;
+      
+      vec4 fragcolor_tmp = vec4(aFrontColor.rgb, 1.0);
+      fragcolor = vec4(fragcolor_tmp.rgb, fragcolor_tmp.a);
+   }
+</script>
+
+<script id="fragmentShader2" type="fragment">
+   precision mediump float;
+   varying vec4 fragcolor;
+   void main(void) {
+      gl_FragColor = fragcolor;
+   }
+</script>
+
+<script id="vertexShader2" type="vertex">
+   attribute vec3 aVertexPosition;
+   attribute vec3 aFrontColor;
+   attribute vec3 aVertexNormal;
+
+   uniform mat4 uMVMatrix;
+   uniform mat4 uPMatrix;
+   uniform mat4 uNMatrix;
+
+   uniform vec3 uLightPosition1;
+   uniform vec3 uLightPosition2;
+   uniform vec3 uLightPosition3;
+
+   uniform vec4 uLightAmbient;
+   uniform vec4 uLightDiffuse;
+   uniform vec4 uLightSpecular;
+
+   uniform vec4 uMaterialDiffuse;
+   float materialShininess = 10.0;
+
+   float Ka = 0.5;
+   float Kd = 0.9;
+   float Ks = 3.0;
+
+   varying vec4 fragcolor;
+   uniform sampler2D uSampler;
+
+   void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      vec3 vPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
+   
+      vec3 n = normalize(vec3(uNMatrix * vec4(aVertexNormal, 1.0)));
+      vec3 l1 = normalize(uLightPosition1 - vPosition);
+      vec3 l2 = normalize(uLightPosition2 - vPosition);
+      vec3 l3 = normalize(uLightPosition3 - vPosition);
+
+      float diffuseWeight1 = max(dot(n, l1), 0.0);
+      float diffuseWeight2 = max(dot(n, l2), 0.0);
+      float diffuseWeight3 = max(dot(n, l3), 0.0);
+
+      // Initialize params
+      vec4 La = uLightAmbient;
+      vec4 Ld1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld3 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls3 = vec4(0.0, 0.0, 0.0, 1.0);
+
+      if(diffuseWeight1 > 0.0){
+         Ld1 = uLightDiffuse * uMaterialDiffuse * diffuseWeight1;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l1, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls1 = uLightSpecular * specular;
+      }
+      if(diffuseWeight2 > 0.0){
+         Ld2 = uLightDiffuse * uMaterialDiffuse * diffuseWeight2;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l2, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls2 = uLightSpecular * specular;
+      }
+      if(diffuseWeight3 > 0.0){
+         Ld3 = uLightDiffuse * uMaterialDiffuse * diffuseWeight3;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l3, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls3 = uLightSpecular * specular;
+      }
+
+      vec4 colorWeight = Ka * La + Kd * (Ld1 + Ld2 + Ld3) + Ks * (Ls1 + Ls2 + Ls3);
+      vec4 fragcolor_tmp = vec4(aFrontColor, 1.0);
+      fragcolor = vec4((colorWeight * fragcolor_tmp).rgb, fragcolor_tmp.a);
+   }
+</script>
+
+<script id="fragmentShader3" type="fragment">
+   precision mediump float;
+
+   varying vec4 fragcolor;
+
+   // Light Position / Direction
+   varying vec3 vPosition;
+   varying vec3 vNormal;
+
+   // Light ambient / diffuse / specular / position
+   uniform vec4 uLightAmbient;
+   uniform vec4 uLightDiffuse;
+   uniform vec4 uLightSpecular;
+   uniform vec3 uLightPosition1;
+   uniform vec3 uLightPosition2;
+   uniform vec3 uLightPosition3;
+   
+   // Material ambient / diffuse / specular
+   //uniform vec4 uMaterialAmbient;
+   uniform vec4 uMaterialDiffuse;
+   //uniform vec4 uMaterialSpecular;
+
+   // Params to tune
+   float Ka = 0.5;
+   float Kd = 0.9;
+   float Ks = 3.0;
+   float materialShininess = 200.0;
+
+   void main(void){
+      vec3 l1 = normalize(uLightPosition1 - vPosition);
+      vec3 l2 = normalize(uLightPosition2 - vPosition);
+      vec3 l3 = normalize(uLightPosition3 - vPosition);
+
+      vec3 n = normalize(vNormal);
+
+      float diffuseWeight1 = max(dot(n, l1), 0.0);
+      float diffuseWeight2 = max(dot(n, l2), 0.0);
+      float diffuseWeight3 = max(dot(n, l3), 0.0);
+
+      // Initialize params
+      vec4 La = uLightAmbient;
+      vec4 Ld1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld3 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls3 = vec4(0.0, 0.0, 0.0, 1.0);
+
+      if(diffuseWeight1 > 0.0){
+         Ld1 = uLightDiffuse * uMaterialDiffuse * diffuseWeight1;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l1, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls1 = uLightSpecular * specular;
+      }
+      if(diffuseWeight2 > 0.0){
+         Ld2 = uLightDiffuse * uMaterialDiffuse * diffuseWeight2;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l2, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls2 = uLightSpecular * specular;
+      }
+      if(diffuseWeight3 > 0.0){
+         Ld3 = uLightDiffuse * uMaterialDiffuse * diffuseWeight3;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l3, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls3 = uLightSpecular * specular;
+      }
+
+      vec4 colorWeight = Ka * La + Kd * (Ld1 + Ld2 + Ld3) + Ks * (Ls1 + Ls2 + Ls3);
+      gl_FragColor = vec4((colorWeight * fragcolor).rgb, fragcolor.a);
+   }
+
+</script>
+
+<script id="vertexShader3" type="vertex">
+   attribute vec3 aVertexPosition;
+   attribute vec3 aFrontColor;
+   attribute vec3 aVertexNormal;
+
+   uniform mat4 uMVMatrix;
+   uniform mat4 uPMatrix;
+   uniform mat4 uNMatrix;
+
+   varying vec3 vPosition;
+   varying vec3 vNormal;
+
+   varying vec4 fragcolor;
+   uniform sampler2D uSampler;
+
+   void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      vPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
+      vNormal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
+      
+      vec4 fragcolor_tmp = vec4(aFrontColor.rgb, 1.0);
+      fragcolor = vec4(fragcolor_tmp.rgb, fragcolor_tmp.a);
+   }
+
+</script>
+
+<script id="fragmentShader4" type="fragment">
+   precision mediump float;
+
+   varying vec4 fragcolor;
+
+   // Light Position / Direction
+   varying vec3 vPosition;
+   varying vec3 vNormal;
+
+   // Light ambient / diffuse / specular / position
+   uniform vec4 uLightAmbient;
+   uniform vec4 uLightDiffuse;
+   uniform vec4 uLightSpecular;
+   uniform vec3 uLightPosition1;
+   uniform vec3 uLightPosition2;
+   uniform vec3 uLightPosition3;
+   
+   // Material ambient / diffuse / specular
+   uniform vec4 uMaterialDiffuse;
+
+   // Params to tune
+   float Ka = 0.5;
+   float Kd = 0.9;
+   float Ks = 3.0;
+   float materialShininess = 50.0;
+   
+   uniform float levels;
+   float scaleFactor = 1.0 / levels;
+
+   void main(void){
+      vec3 l1 = normalize(uLightPosition1 - vPosition);
+      vec3 l2 = normalize(uLightPosition2 - vPosition);
+      vec3 l3 = normalize(uLightPosition3 - vPosition);
+
+      vec3 n = normalize(vNormal);
+
+      float diffuseWeight1 = floor(max(dot(n, l1), 0.0) * levels) * scaleFactor;
+      float diffuseWeight2 = floor(max(dot(n, l2), 0.0) * levels) * scaleFactor;
+      float diffuseWeight3 = floor(max(dot(n, l3), 0.0) * levels) * scaleFactor;
+
+      // Initialize params
+      vec4 La = uLightAmbient;
+      vec4 Ld1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ld3 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls1 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls2 = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 Ls3 = vec4(0.0, 0.0, 0.0, 1.0);
+
+      if(diffuseWeight1 > 0.0){
+         Ld1 = uLightDiffuse * uMaterialDiffuse * diffuseWeight1;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l1, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls1 = uLightSpecular * specular;
+      }
+      if(diffuseWeight2 > 0.0){
+         Ld2 = uLightDiffuse * uMaterialDiffuse * diffuseWeight2;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l2, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls2 = uLightSpecular * specular;
+      }
+      if(diffuseWeight3 > 0.0){
+         Ld3 = uLightDiffuse * uMaterialDiffuse * diffuseWeight3;
+         vec3 eyeDirection = normalize(-vPosition);
+         vec3 reflectDirection = reflect(-l3, n);
+         float specular = pow(max(dot(reflectDirection, eyeDirection), 0.0), materialShininess);
+         Ls3 = uLightSpecular * specular;
+      }
+
+      vec4 colorWeight = Ka * La + Kd * (Ld1 + Ld2 + Ld3) + Ks * (Ls1 + Ls2 + Ls3);
+      gl_FragColor = vec4((colorWeight * fragcolor).rgb, fragcolor.a);
+   }
+
+</script>
+
+<script id="vertexShader4" type="vertex">
+   attribute vec3 aVertexPosition;
+   attribute vec3 aFrontColor;
+   attribute vec3 aVertexNormal;
+
+   uniform mat4 uMVMatrix;
+   uniform mat4 uPMatrix;
+   uniform mat4 uNMatrix;
+
+   varying vec3 vPosition;
+   varying vec3 vNormal;
+
+   varying vec4 fragcolor;
+   uniform sampler2D uSampler;
+
+
+   void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      vPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
+      vNormal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
+      
+      vec4 fragcolor_tmp = vec4(aFrontColor.rgb, 1.0);
+      fragcolor = vec4(fragcolor_tmp.rgb, fragcolor_tmp.a);
+   }
+
+</script>
+
+
+<script type="text/javascript">
+
+    var gl;
+
+    function initGL(canvas) {
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL, sorry :-(");
+        }
+        if(!gl.getExtension('OES_standard_derivatives')){
+            throw 'extension not support';
+        }
+    }
+
+
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) {
+                str += k.textContent;
+            }
+            k = k.nextSibling;
+        }
+
+        var shader;
+        if (shaderScript.type == "fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+
+    var shaderPrograms = [];
+
+    function initShaders(index) {
+        var fragmentShader = getShader(gl, "fragmentShader" + index);
+        var vertexShader = getShader(gl, "vertexShader" + index);
+
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert("Could not initialise shaders");
+        }
+
+        //gl.useProgram(shaderProgram);
+
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+        shaderProgram.vertexFrontColorAttribute = gl.getAttribLocation(shaderProgram, "aFrontColor");
+        gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
+        
+        shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+        gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+
+        shaderProgram.lightPositionUniform1 = gl.getUniformLocation(shaderProgram, "uLightPosition1");
+        shaderProgram.lightPositionUniform2 = gl.getUniformLocation(shaderProgram, "uLightPosition2");
+        shaderProgram.lightPositionUniform3 = gl.getUniformLocation(shaderProgram, "uLightPosition3");
+        shaderProgram.lightAmbientUniform = gl.getUniformLocation(shaderProgram, "uLightAmbient");
+        shaderProgram.lightDiffuseUniform = gl.getUniformLocation(shaderProgram, "uLightDiffuse");
+        shaderProgram.lightSpecularUniform = gl.getUniformLocation(shaderProgram, "uLightSpecular");
+
+        shaderProgram.materialDiffuseUniform = gl.getUniformLocation(shaderProgram, "uMaterialDiffuse");
+        shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+
+        shaderProgram.levelUniform = gl.getUniformLocation(shaderProgram, "levels");
+
+        shaderPrograms.push(shaderProgram);
+    }
+
+    function handleLoadedTexture(texture) {
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+        gl.generateMipmap(gl.TEXTURE_2D);
+
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+
+    var galvanizedTexture;
+
+    function initTextures() {
+        galvanizedTexture = gl.createTexture();
+        galvanizedTexture.image = new Image();
+        galvanizedTexture.image.onload = function () {
+            handleLoadedTexture(galvanizedTexture)
+        }
+        galvanizedTexture.image.src = "galvanizedTexture.jpg";
+    }
+
+
+    var mvMatrix = mat4.create();
+    var pMatrix = mat4.create();
+    var nMatrix = mat4.create();
+    var shearMatrix = mat4.create();
+
+
+    function setMatrixUniforms(index) {
+        gl.uniformMatrix4fv(shaderPrograms[index].pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(shaderPrograms[index].mvMatrixUniform, false, mvMatrix);
+        gl.uniformMatrix4fv(shaderPrograms[index].nMatrixUniform, false, nMatrix);
+    }
+
+    function degToRad(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+
+    var teapotVertexPositionBuffers = [];
+    var teapotVertexNormalBuffers = [];
+    var teapotVertexFrontColorBuffers = [];
+    var teapotVertexBackColorBuffers = [];
+
+    function handleLoadedTeapot(teapotData) {
+        var teapotVertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexNormals), gl.STATIC_DRAW);
+        teapotVertexNormalBuffer.itemSize = 3;
+        teapotVertexNormalBuffer.numItems = teapotData.vertexNormals.length / 3;
+        teapotVertexNormalBuffers.push(teapotVertexNormalBuffer);
+
+        var teapotVertexFrontColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexFrontColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexFrontcolors), gl.STATIC_DRAW);
+        teapotVertexFrontColorBuffer.itemSize = 3;
+        teapotVertexFrontColorBuffer.numItems = teapotData.vertexFrontcolors.length / 3;
+        teapotVertexFrontColorBuffers.push(teapotVertexFrontColorBuffer);
+
+        var teapotVertexBackColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexBackColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexBackcolors), gl.STATIC_DRAW);
+        teapotVertexBackColorBuffer.itemSize = 3;
+        teapotVertexBackColorBuffer.numItems = teapotData.vertexBackcolors.length / 3;
+        teapotVertexBackColorBuffers.push(teapotVertexBackColorBuffer);
+
+        var teapotVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexPositions), gl.STATIC_DRAW);
+        teapotVertexPositionBuffer.itemSize = 3;
+        teapotVertexPositionBuffer.numItems = teapotData.vertexPositions.length / 3;
+        teapotVertexPositionBuffers.push(teapotVertexPositionBuffer);
+
+        console.log("Handle Loaded Teapot end.");
+    }
+
+
+    function loadTeapot(filename) {
+        var request = new XMLHttpRequest();
+        request.open("GET", filename);
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                handleLoadedTeapot(JSON.parse(request.responseText));
+            }
+        }
+        request.send();
+    }
+
+
+    var teapotAngle = 180;
+
+
+    function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+       
+        var translateVec = [[0, 0, -5], [2, 0, -5], [-2, 0, -5]];
+
+        var obj = [
+            {
+                'translation':{
+                    'x': $('#translation0x'),
+                    'y': $('#translation0y'),
+                    'z': $('#translation0z')
+                },
+                'rotation':{
+                    'x': $('#rotation0x'),
+                    'y': $('#rotation0y'),
+                    'z': $('#rotation0z')
+                },
+                'scale':{
+                    'x': $('#scaling0x'),
+                    'y': $('#scaling0y'),
+                    'z': $('#scaling0z')
+                },
+                'shear': $('#shear0'),
+                'shading': $('#shading0')
+            },
+            {
+                'translation':{
+                    'x': $('#translation1x'),
+                    'y': $('#translation1y'),
+                    'z': $('#translation1z')
+                },
+                'rotation':{
+                    'x': $('#rotation1x'),
+                    'y': $('#rotation1y'),
+                    'z': $('#rotation1z')
+                },
+                'scale':{
+                    'x': $('#scaling1x'),
+                    'y': $('#scaling1y'),
+                    'z': $('#scaling1z')
+                },
+                'shear': $('#shear1'),
+                'shading': $('#shading1')
+            },
+            {
+                'translation':{
+                    'x': $('#translation2x'),
+                    'y': $('#translation2y'),
+                    'z': $('#translation2z')
+                },
+                'rotation':{
+                    'x': $('#rotation2x'),
+                    'y': $('#rotation2y'),
+                    'z': $('#rotation2z')
+                },
+                'scale':{
+                    'x': $('#scaling2x'),
+                    'y': $('#scaling2y'),
+                    'z': $('#scaling2z')
+                },
+                'shear': $('#shear2'),
+                'shading': $('#shading2')
+            }
+        ];
+
+        for (var i = 0; i < 3; i ++){
+           if (teapotVertexPositionBuffers[i] == null || teapotVertexNormalBuffers[i] == null || teapotVertexFrontColorBuffers[i] == null || teapotVertexBackColorBuffers[i] == null) {
+               console.log("Nothing exists?");
+               return;
+           }
+           
+           var shader = parseInt(obj[i]['shading'].val());
+           gl.useProgram(shaderPrograms[shader]);
+           
+           mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+           mat4.identity(mvMatrix);
+           mat4.identity(shearMatrix);
+
+           mat4.translate(mvMatrix, translateVec[i]);
+           mat4.translate(mvMatrix, [obj[i]['translation']['x'].val(), obj[i]['translation']['y'].val(), obj[i]['translation']['z'].val()]);
+
+           shearMatrix[4] = 1 / Math.tan(degToRad(obj[i]['shear'].val()));
+           //console.log(obj['shear'].val());
+
+           mat4.multiply(mvMatrix, shearMatrix, mvMatrix);
+           mat4.rotateX(mvMatrix, degToRad(obj[i]['rotation']['x'].val()));
+           mat4.rotateY(mvMatrix, degToRad(obj[i]['rotation']['y'].val()));
+           mat4.rotateZ(mvMatrix, degToRad(obj[i]['rotation']['z'].val()));
+
+           mat4.rotate(mvMatrix, degToRad(teapotAngle), [0, 1, 0]);
+
+           mat4.scale(mvMatrix, [obj[i]['scale']['x'].val(), obj[i]['scale']['y'].val(), obj[i]['scale']['z'].val()]);
+           
+           mat4.set(mvMatrix, nMatrix);
+           mat4.inverse(nMatrix);
+           mat4.transpose(nMatrix);
+
+           gl.activeTexture(gl.TEXTURE0);
+           gl.bindTexture(gl.TEXTURE_2D, galvanizedTexture);
+
+           gl.uniform1i(shaderPrograms[shader].samplerUniform, 0);
+           gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffers[i]);
+           gl.vertexAttribPointer(shaderPrograms[shader].vertexPositionAttribute, teapotVertexPositionBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+
+           gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexFrontColorBuffers[i]);
+           gl.vertexAttribPointer(shaderPrograms[shader].vertexFrontColorAttribute, teapotVertexFrontColorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+
+           gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffers[i]);
+           gl.vertexAttribPointer(shaderPrograms[shader].vertexNormalAttribute, teapotVertexNormalBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+
+           setMatrixUniforms(shader);
+
+           gl.uniform3fv(shaderPrograms[shader].lightPositionUniform1, [$("#Light0X").val(), $("#Light0Y").val(), $("#Light0Z").val()]);
+           gl.uniform3fv(shaderPrograms[shader].lightPositionUniform2, [$("#Light1X").val(), $("#Light1Y").val(), $("#Light1Z").val()]);
+           gl.uniform3fv(shaderPrograms[shader].lightPositionUniform3, [$("#Light2X").val(), $("#Light2Y").val(), $("#Light2Z").val()]);
+           gl.uniform4fv(shaderPrograms[shader].lightAmbientUniform, [$("#AmbientR").val(), $("#AmbientG").val(), $("#AmbientB").val(), 1.0]);
+           gl.uniform4fv(shaderPrograms[shader].lightDiffuseUniform, [$("#DiffuseR").val(),$("#DiffuseG").val(), $("#DiffuseB").val(), 1.0]);
+           gl.uniform4fv(shaderPrograms[shader].lightSpecularUniform, [$("#SpecularR").val(), $("#SpecularG").val(), $("#SpecularB").val(), 1.0]);
+           gl.uniform1f(shaderPrograms[shader].levelUniform, $("#toonLevel").val());
+
+           gl.uniform4fv(shaderPrograms[shader].materialDiffuseUniform, [$("#MaterialDiffuseR").val(), $("#MaterialDiffuseG").val(), $("#MaterialDiffuseB").val(), 1.0]);
+
+           gl.drawArrays(gl.TRIANGLES, 0, teapotVertexPositionBuffers[i].numItems);
+        }
+
+    }
+
+
+    var lastTime = 0;
+    function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+            teapotAngle += 0.03 * elapsed;
+        }
+        lastTime = timeNow;
+    }
+
+
+    function tick() {
+        requestAnimFrame(tick);
+        drawScene();
+        animate();
+    }
+
+
+    function webGLStart() {
+        var canvas = document.getElementById("ICG-canvas");
+        var width = $(window).width();
+        canvas.width = width;
+        initGL(canvas);
+       for (var i = 0; i < 5; i ++){
+         initShaders(i);
+       }
+        var filenames = ["Kangaroo.json", "Car_road.json", "Easter.json"];
+        for (var i = 0; i < 3; i ++){
+            loadTeapot(filenames[i]);
+        }
+
+        gl.clearColor(0.0, 0.2, 0.2, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        tick();
+    }
+
+</script>
+
+<style type="text/css">
+   td input {
+      display: inline-block;
+      float: right;
+      width: 80%;
+   }
+</style>
+
+</head>
+
+
+<body onload="webGLStart();">
+  
+    <canvas id="ICG-canvas" style="border: none;" width="800" height="600"></canvas>
+    <br/>
+    <div style="display:flex; flex-direction:row; width: 1000px; height: 600px;">
+        <div style="display:block; float:left;">
+            <table class="table-condensed" width="600">
+                <tr>
+                    <th colspan="4"> Object 0 </th>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">translation</td>
+                    <td width="25%">
+                       x:<input type="range" id="translation0x" min="-5" max="5" step="0.01" value="0">
+                    </td>
+                    <td width="25%">y:<input type="range" id="translation0y" min="-5" max="5" step="0.01" value="0"></td>
+                    <td width="25%">z:<input type="range" id="translation0z" min="-5" max="5" step="0.01" value="0"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">rotation</td>
+                    <td width="25%">x:<input type="range" id="rotation0x" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">y:<input type="range" id="rotation0y" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">z:<input type="range" id="rotation0z" min="0" max="360" step="0.1" value="180"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">scaling</td>
+                    <td width="25%">x:<input type="range" id="scaling0x" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">y:<input type="range" id="scaling0y" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">z:<input type="range" id="scaling0z" min="0.1" max="3" step="0.01" value="1"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shear</td>
+                    <td width="25%" colspan="3"><input type="range" id="shear0" min="0" max="90" step="0.01" value="90" style="width:95%;"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shading</td>
+                    <td width="25%" colspan="3">
+                       <select id="shading0">
+                           <option value="0">None</option>
+                           <option value="1">Flat</option>
+                           <option value="2">Gauraud</option>
+                           <option value="3">Phong</option>
+                           <option value="4">Cartoon</option>
+                       </select>
+                    </td>
+                </tr>
+            </table>
+            <table class="table-condensed">
+                <tr>
+                    <th colspan="4"> Object 1 </th>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">translation</td>
+                    <td width="25%">x:<input type="range" id="translation1x" min="-5" max="5" step="0.01" value="0"></td>
+                    <td width="25%">y:<input type="range" id="translation1y" min="-5" max="5" step="0.01" value="0"></td>
+                    <td width="25%">z:<input type="range" id="translation1z" min="-5" max="5" step="0.01" value="0"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">rotation</td>
+                    <td width="25%">x:<input type="range" id="rotation1x" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">y:<input type="range" id="rotation1y" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">z:<input type="range" id="rotation1z" min="0" max="360" step="0.1" value="180"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">scaling</td>
+                    <td width="25%">x:<input type="range" id="scaling1x" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">y:<input type="range" id="scaling1y" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">z:<input type="range" id="scaling1z" min="0.1" max="3" step="0.01" value="1"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shear</td>
+                    <td width="25%" colspan="3"><input type="range" id="shear1" min="0" max="90" step="0.01" value="90" style="width:95%;"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shading</td>
+                    <td width="25%" colspan="3">
+                       <select id="shading1">
+                           <option value="0">None</option>
+                           <option value="1">Flat</option>
+                           <option value="2">Gauraud</option>
+                           <option value="3">Phong</option>
+                           <option value="4">Cartoon</option>
+                       </select>
+                    </td>
+                </tr>
+
+            </table>
+            <table class="table-condensed">
+                <tr>
+                    <th colspan="4"> Object 2 </th>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">translation</td>
+                    <td width="25%">x:<input type="range" id="translation2x" min="-5" max="5" step="0.01" value="0"></td>
+                    <td width="25%">y:<input type="range" id="translation2y" min="-5" max="5" step="0.01" value="0"></td>
+                    <td width="25%">z:<input type="range" id="translation2z" min="-5" max="5" step="0.01" value="0"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">rotation</td>
+                    <td width="25%">x:<input type="range" id="rotation2x" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">y:<input type="range" id="rotation2y" min="0" max="360" step="0.1" value="180"></td>
+                    <td width="25%">z:<input type="range" id="rotation2z" min="0" max="360" step="0.1" value="180"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">scaling</td>
+                    <td width="25%">x:<input type="range" id="scaling2x" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">y:<input type="range" id="scaling2y" min="0.1" max="3" step="0.01" value="1"></td>
+                    <td width="25%">z:<input type="range" id="scaling2z" min="0.1" max="3" step="0.01" value="1"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shear</td>
+                    <td width="25%" colspan="3"><input type="range" id="shear2" min="0" max="90" step="0.01" value="90" style="width:95%;"></td>
+                </tr>
+                <tr>
+                    <td width="25%" style="padding-left: 20px">shading</td>
+                    <td width="25%" colspan="3">
+                       <select id="shading2">
+                           <option value="0">None</option>
+                           <option value="1">Flat</option>
+                           <option value="2">Gauraud</option>
+                           <option value="3">Phong</option>
+                           <option value="4">Cartoon</option>
+                       </select>
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+        <div style="display:block; float: left; margin-left: 20px;">
+            <table width=600" class="table-condensed">
+               <tr>
+                  <th colspan="4">Light Options</th>
+               </tr>
+               <tr>
+                  <td>Light0 Position:</td>
+                  <td>x:<input type="range" id="Light0X" min="-200" max="200" step="1" value="-200"></td>
+                  <td>y:<input type="range" id="Light0Y" min="-200" max="200" step="1" value="-200"></td>
+                  <td>z:<input type="range" id="Light0Z" min="-200" max="200" step="1" value="0"></td>
+               </tr>
+               <tr>
+                  <td>Light1 Position:</td>
+                  <td>x:<input type="range" id="Light1X" min="-200" max="200" step="1" value="100"></td>
+                  <td>y:<input type="range" id="Light1Y" min="-200" max="200" step="1" value="200"></td>
+                  <td>z:<input type="range" id="Light1Z" min="-200" max="200" step="1" value="0"></td>
+               </tr>
+               <tr>
+                  <td>Light2 Position:</td>
+                  <td>x:<input type="range" id="Light2X" min="-200" max="200" step="1" value="100"></td>
+                  <td>y:<input type="range" id="Light2Y" min="-200" max="200" step="1" value="200"></td>
+                  <td>z:<input type="range" id="Light2Z" min="-200" max="200" step="1" value="0"></td>
+               </tr>
+               <tr>
+                  <td>Light Ambient:</td>
+                  <td>R:<input type="range" id="AmbientR" min="0" max="1.0" step="0.01" value="0.3"></td>
+                  <td>g:<input type="range" id="AmbientG" min="0" max="1.0" step="0.01" value="0.2"></td>
+                  <td>B:<input type="range" id="AmbientB" min="0" max="1.0" step="0.01" value="0.2"></td>
+               </tr>
+               <tr>
+                  <td>Light Diffuse:</td>
+                  <td>R:<input type="range" id="DiffuseR" min="0" max="1.0" step="0.01" value="0.6"></td>
+                  <td>g:<input type="range" id="DiffuseG" min="0" max="1.0" step="0.01" value="0.5"></td>
+                  <td>B:<input type="range" id="DiffuseB" min="0" max="1.0" step="0.01" value="0.8"></td>
+               </tr>
+               <tr>
+                  <td>Light Specular:</td>
+                  <td>R:<input type="range" id="SpecularR" min="0" max="1.0" step="0.01" value="0.1"></td>
+                  <td>g:<input type="range" id="SpecularG" min="0" max="1.0" step="0.01" value="0.1"></td>
+                  <td>B:<input type="range" id="SpecularB" min="0" max="1.0" step="0.01" value="0.1"></td>
+               </tr>
+               <tr>
+                  <td>Material Diffuse:</td>
+                  <td>R:<input type="range" id="MaterialDiffuseR" min="0" max="1.0" step="0.01" value="1.0"></td>
+                  <td>g:<input type="range" id="MaterialDiffuseG" min="0" max="1.0" step="0.01" value="1.0"></td>
+                  <td>B:<input type="range" id="MaterialDiffuseB" min="0" max="1.0" step="0.01" value="1.0"></td>
+               </tr>
+               <tr>
+                  <td>Toon Level:</td>
+                  <td><input type="range" id="toonLevel" min="2.0" max="6.0" step="1.0" value="2.0"></td>
+               </tr>
+            </table>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

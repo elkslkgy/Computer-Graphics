@@ -1,0 +1,597 @@
+5,9c5
+< <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+< <!-- <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"> -->
+< <link rel="stylesheet" href="overlay.css">
+< <link rel="stylesheet" href="UI.css">
+< <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+---
+> <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+13d8
+< <script type="text/javascript" src="draw.js"></script>
+15c10
+< <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+---
+> <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+16a12,14
+> <script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
+> 
+> <!-- Flat Shading -->
+153c151
+< 
+---
+> <!-- Gouraud Shading -->
+245a244
+> <!-- Phong Shading -->
+382a382
+> <!-- Toon Shading -->
+536,537c536
+<     function initGL(canvas) {
+<         console.log("initGL");
+---
+>     function initGL(canvas) {       //ok
+540,541c539,540
+<             gl.getExtension('OES_standard_derivatives');
+<             gl.getExtension('EXT_shader_texture_lod');
+---
+>             canvas.width = 1400;
+>             canvas.height = 635;
+548a548,550
+>         if(!gl.getExtension('OES_standard_derivatives')) {
+>             throw 'extension not support';
+>         }
+551d552
+< 
+586d586
+< 
+590,591d589
+<     // var index = 0;
+< 
+636,637d633
+<         // console.log("shaderProgram:");
+<         // console.log(shaderProgram);
+640d635
+< 
+687d681
+< 
+695a690,692
+>     var on_off1 = [1, 1, 1];
+>     var on_off2 = [1, 1, 1];
+>     var on_off3 = [1, 1, 1];
+707a705,708
+> 
+>         gl.uniform3fv(shaderProgram[index].ON1, on_off1);
+>         gl.uniform3fv(shaderProgram[index].ON2, on_off2);
+>         gl.uniform3fv(shaderProgram[index].ON3, on_off3);
+714d714
+< 
+721d720
+<         console.log("handleLoadedTeapot");
+723d721
+<         console.log("----------------------");
+730,731d727
+<         // console.log("Normal");
+<         // console.log(in_teapotVertexNormalBuffer)
+739,740d734
+<         // console.log("Frontcolors");
+<         // console.log(in_teapotVertexFrontColorBuffer);
+748,749d741
+<         // console.log("Backcolors");
+<         // console.log(in_teapotVertexBackColorBuffer);
+757,758d748
+<         // console.log("vertexPositions");
+<         // console.log(in_teapotVertexPositionBuffer);
+772d761
+< 
+777,782c766,769
+<         // if (index == 0) {
+<         //     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+<         //     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+<         // }
+<         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+<         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+---
+>         if (index == 0) {
+>             gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+>             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+>         }
+792d778
+<         // 這裡是設定xy位置
+839,847c825,875
+<         // var checkbox = document.getElementById("K_light1");
+<         // if (checkbox.checked) { on_off1 = [1, 1, 1]; }
+<         // else { on_off1 = [0, 0, 0]; }
+<         // var checkbox = document.getElementById("K_light2");
+<         // if (checkbox.checked) { on_off2 = [1, 1, 1]; }
+<         // else { on_off2 = [0, 0, 0]; }
+<         // var checkbox = document.getElementById("K_light3");
+<         // if (checkbox.checked) { on_off3 = [1, 1, 1]; }
+<         // else { on_off3 = [0, 0, 0]; }
+---
+>         var checkbox = document.getElementById("K_light1");
+>         if (checkbox.checked) { on_off1 = [1, 1, 1]; }
+>         else { on_off1 = [0, 0, 0]; }
+>         var checkbox = document.getElementById("K_light2");
+>         if (checkbox.checked) { on_off2 = [1, 1, 1]; }
+>         else { on_off2 = [0, 0, 0]; }
+>         var checkbox = document.getElementById("K_light3");
+>         if (checkbox.checked) { on_off3 = [1, 1, 1]; }
+>         else { on_off3 = [0, 0, 0]; }
+>             
+> 
+>         //shear
+>         if (index == 0) {
+>             var Syx = document.getElementById("K_yx").value;
+>             var Szx = document.getElementById("K_zx").value;
+>             var Sxy = document.getElementById("K_xy").value;
+>             var Szy = document.getElementById("K_zy").value;
+>             var Sxz = document.getElementById("K_xz").value;
+>             var Syz = document.getElementById("K_yz").value;
+>             var matrix = [1, Syx, Szx, 0,
+>                         Sxy,   1, Szy, 0,
+>                         Sxz, Syz,   1, 0,
+>                           0,   0,   0, 1];
+>             mat4.multiply(mvMatrix, matrix, mvMatrix);
+>         }
+>         else if (index == 1) {
+>             var Syx = document.getElementById("T_yx").value;
+>             var Szx = document.getElementById("T_zx").value;
+>             var Sxy = document.getElementById("T_xy").value;
+>             var Szy = document.getElementById("T_zy").value;
+>             var Sxz = document.getElementById("T_xz").value;
+>             var Syz = document.getElementById("T_yz").value;
+>             var matrix = [1, Syx, Szx, 0,
+>                         Sxy,   1, Szy, 0,
+>                         Sxz, Syz,   1, 0,
+>                           0,   0,   0, 1];
+>             mat4.multiply(mvMatrix, matrix, mvMatrix);
+>         }
+>         else {
+>             var Syx = document.getElementById("C_yx").value;
+>             var Szx = document.getElementById("C_zx").value;
+>             var Sxy = document.getElementById("C_xy").value;
+>             var Szy = document.getElementById("C_zy").value;
+>             var Sxz = document.getElementById("C_xz").value;
+>             var Syz = document.getElementById("C_yz").value;
+>             var matrix = [1, Syx, Szx, 0,
+>                         Sxy,   1, Szy, 0,
+>                         Sxz, Syz,   1, 0,
+>                           0,   0,   0, 1];
+>             mat4.multiply(mvMatrix, matrix, mvMatrix);
+>         }
+850,851d877
+<         // console.log("here shaderProgram[index]");
+<         // console.log(shaderProgram[index]);
+865d890
+<         // console.log("im here");
+869,870c894
+< 
+<     function animate() {
+---
+>     function animate() {        //ok
+874,875c898
+<             teapotAngle += 0.03 * elapsed;
+<             // timeFromStart = (timeFromStart + 0.05 * elapsed) % timeTotal;
+---
+>             teapotAngle -= 0.03 * elapsed;
+880d902
+< 
+884d905
+<         // drawScene(0);
+888c909,910
+<         animate();   
+---
+>         animate();
+>         // console.log("tick");   
+891d912
+< 
+893d913
+<         console.log("webgl start");
+902c922
+<         loadTeapot("Kangaroo.json");
+---
+>         loadTeapot("Car_road.json");
+904c924
+<         gl.clearColor(0.1, 0.1, 0.2, 1.0);
+---
+>         gl.clearColor(0.0, 0.0, 0.0, 0.9);
+912d931
+< 
+916,931c935,1133
+< <body onload="webGLStart();">
+< <!-- <body onload="setContext();webGLStart();"> -->
+< <canvas id="ICG-canvas" style="border: none;" width="1420" height="500"></canvas>
+< <!-- <canvas id="overlay" style="border: none;" width=1420;  height=500; 
+<         onmousedown="mousedownHandler(event)" 
+<         onmousemove="mousemoveHandler(event)"
+<         onmouseup="mouseupHandler(event)"
+<         style="cursor:pointer; background-color: transparent"       
+<          >
+< </canvas> -->
+< <div class="container-fluid py-3 px-4" style="background-color: #111131">
+<     <br/>
+<     <div class="row">
+<         <div class="col-1">
+<             <!-- <button onclick="clearCanvas()" type="button" class="form-control btn btn-outline-light">Clean up</button> -->
+<             <button onclick="postdata()" type="button" class="form-control btn btn-outline-light">Clean up</button>
+---
+> <body onload="webGLStart();" style="color:white">
+> <font size="-1">
+>     
+>     <div align="left" style="background-color:black;">      <!-- all UI -->
+> 
+>         <canvas id="ICG-canvas" style="border: none;" width="850" height="600"></canvas>
+>         <br/>
+> 
+>         <style>     /*ok*/
+>             .slidecontainer {
+>                 width: 100%;
+>             }
+>             .slider {
+>                 -webkit-appearance: none;
+>                 height: 6px;
+>                 background: #d3d3d3;
+>                 opacity: 0.7;
+>                 border-radius: 10px;
+>             }
+>             .slider:hover { opacity: 1; }
+>             .slider::-moz-range-thumb {
+>                 width: 12px;
+>                 height: 12px;
+>                 background: #EEEEEE;
+>                 cursor: pointer;
+>             }
+> 
+>             .small_slider {
+>                 -webkit-appearance: none;
+>                 display: inline-block;
+>                 height: 5px;
+>                 background: #d3d3d3;
+>                 opacity: 0.7;
+>                 border-radius: 10px;
+>             }
+>             .small_slider:hover { opacity: 1; }
+>             .small_slider::-moz-range-thumb {
+>                 width: 10px;
+>                 height: 10px;
+>                 background: #EEEEEE;
+>                 cursor: pointer;
+>             }
+>             .switch {
+>               position: relative;
+>               display: inline-block;
+>               width: 127px;
+>               height: 21px;
+>             }
+> 
+>             .button {
+>               position: absolute;
+>               cursor: pointer;
+>               top: 0;
+>               left: 77;
+>               right: 0;
+>               bottom: 0;
+>               background-color: #ccc;
+>             }
+> 
+>             .button:before {
+>               position: absolute;
+>               content: "";
+>               height: 17px;
+>               width: 17px;
+>               left: 2px;
+>               bottom: 2px;
+>               background-color: white;
+>               -webkit-transition: .4s;
+>               transition: .4s;
+>             }
+> 
+>             input:checked + .button {
+>               background-color: #2196F3;
+>             }
+> 
+>             input:checked + .button:before {
+>               -webkit-transform: translateX(29px); 
+>             }
+> 
+>             /* Rounded sliders */
+>             .button.round {
+>               border-radius: 34px;
+>             }
+>             .button.round:before {
+>               border-radius: 50%;
+>             }
+>         </style>
+> 
+>         <B>LIGHT:</B>
+> 
+>         <div class="row" align="center">
+>             <div class="col-2 row align-items-center">
+>                 <label class="switch">Light1:
+>                     <input type="checkbox" checked id="K_light1" autocomplete="off">
+>                     <span class="button round"></span>
+>                 </label>
+>             </div>
+>             <div class="col-2 row align-items-center">
+>                 <label class="switch">Light2:
+>                     <input type="checkbox" checked id="K_light2" autocomplete="off">
+>                     <span class="button round"></span>
+>                 </label>
+>             </div>
+>             <div class="col-2 row align-items-center">
+>                 <label class="switch">Light3:
+>                     <input type="checkbox" checked id="K_light3" autocomplete="off">
+>                     <span class="button round"></span>
+>                 </label>
+>             </div>
+>         </div>
+> 
+>         <div class="row">       <!-- Shading Choice -->
+>             <div class="col-4 row">
+>                 <label class="col-2">Kangaroo:</label>
+>                 <select class="col mx-4" id="Kangaroo" onchange="changeShaders(0, id)" autocomplete="off">
+>                     <option selected="selected" value="_Flat">Flat Shading
+>                     <option value="_Gouraud">Gouraud Shading
+>                     <option value="_Phong">Phong Shading
+>                     <option value="_Toon">Toon Shading
+>                 </select>
+>             </div>
+>             <div class="col-4 row">
+>                 <label class="col-2">Easter:</label>
+>                 <select class="col mx-2" id="Easter" onchange="changeShaders(1, id)" autocomplete="off">
+>                     <option selected="selected" value="_Flat">Flat Shading
+>                     <option value="_Gouraud">Gouraud Shading
+>                     <option value="_Phong">Phong Shading
+>                     <option value="_Toon">Toon Shading
+>                 </select>
+>             </div>
+>             <div class="col-4 row">
+>                 <label class="col-1">Car:</label>
+>                 <select class="col mx-3" id="Car" onchange="changeShaders(2, id)" autocomplete="off">
+>                     <option selected="selected" value="_Flat">Flat Shading
+>                     <option value="_Gouraud">Gouraud Shading
+>                     <option value="_Phong">Phong Shading
+>                     <option value="_Toon">Toon Shading
+>                 </select>
+>             </div>            
+>         </div>
+> 
+>         <div class="row">       <!-- Xposition -->
+>             <div class="col-4 row">
+>                 <label class="col-2">X.pos:</label>
+>                 <input class="slider col align-self-center" type="range" min="-9.5" max="4.5" value="-2.5" id="KangarooX" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row">
+>                 <label class="col-2">X.pos:</label>
+>                 <input class="slider col align-self-center" type="range" min="-7" max="7" value="0" id="EasterX" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">X.pos:</label>
+>                 <input class="slider col" type="range" min="-4.5" max="9.5" value="2.5" id="CarX" step="0.1" autocomplete="off">
+>             </div>
+>         </div>
+>         
+>         <div class="row">       <!-- Yposition -->
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Y.pos:</label>
+>                 <input class="slider col" type="range" min="-0.7" max="5.3" value="2.3" id="KangarooY" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Y.pos:</label>
+>                 <input class="slider col" type="range" min="-3" max="3" value="0" id="EasterY" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Y.pos:</label>
+>                 <input class="slider col" type="range" min="-3.2" max="2.8" value="-0.2" id="CarY" step="0.1" autocomplete="off">
+>             </div>
+>         </div>
+> 
+>         <div class="row">       <!-- Zposition -->
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Z.pos:</label>
+>                 <input class="slider col" type="range" min="-20" max="0" value="-10" id="KangarooZ" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Z.pos:</label>
+>                 <input class="slider col" type="range" min="-20" max="0" value="-10" id="EasterZ" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Z.pos:</label>
+>                 <input class="slider col" type="range" min="-20" max="0" value="-10" id="CarZ" step="0.1" autocomplete="off">
+>             </div>
+>         </div>
+> 
+>         <div class="row">       <!-- Size -->
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Size:</label>
+>                 <input class="slider col" type="range" min="1" max="8" value="4.5" id="KangarooSize" step="0.1" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Size:</label>
+>                 <input class="slider col" type="range" min="1" max="3" value="2" id="EasterSize" step="0.01" autocomplete="off">
+>             </div>
+>             <div class="col-4 row align-items-center">
+>                 <label class="col-2">Size:</label>
+>                 <input class="slider col" type="range" min="1" max="8" value="4.5" id="CarSize" step="0.1" autocomplete="off">
+>             </div>
+933,942c1135,1142
+<         <div class="col-11">
+<             <div class="text-white row"> 
+<                 <div class="col-4 row">
+<                         <label class="col-2">Object1:</label>
+<                         <select class="col mx-2" id="Kangaroo" onchange="changeShaders(0, id)" autocomplete="off">
+<                             <option selected="selected" value="_Flat">Flat Shading
+<                             <option value="_Gouraud">Gouraud Shading
+<                             <option value="_Phong">Phong Shading
+<                             <option value="_Toon">Toon Shading
+<                         </select>
+---
+> 
+>         <B>SHEAR:</B>
+> 
+>         <div class="row">       <!-- first line shear -->
+>             <div class="col-4 row align-items-center">      <!-- Kangaroo's shear first line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_xy" step="0.1" autocomplete="off">
+944,951c1144,1150
+<                 <div class="col-4 row">
+<                         <label class="col-2">Object2:</label>
+<                         <select class="col mx-2" id="Easter" onchange="changeShaders(1, id)" autocomplete="off">
+<                             <option selected="selected" value="_Flat">Flat Shading
+<                             <option value="_Gouraud">Gouraud Shading
+<                             <option value="_Phong">Phong Shading
+<                             <option value="_Toon">Toon Shading
+<                         </select>
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_yx" step="0.1" autocomplete="off">
+>                 </div>
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_zx" step="0.1" autocomplete="off">
+953,961d1151
+<                 <div class="col-4 row">
+<                         <label class="col-2">Object3:</label>
+<                         <select class="col mx-2" id="Car" onchange="changeShaders(2, id)" autocomplete="off">
+<                             <option selected="selected" value="_Flat">Flat Shading
+<                             <option value="_Gouraud">Gouraud Shading
+<                             <option value="_Phong">Phong Shading
+<                             <option value="_Toon">Toon Shading
+<                         </select>
+<                 </div>            
+963,967c1153,1156
+< 
+<             <div class="text-white row">
+<                 <div class="col-4 row">
+<                     <label class="col-2">X.pos:</label>
+<                     <input class="slider col align-self-center" type="range" min="-9.5" max="4.5" value="-2.5" id="KangarooX" step="0.1" autocomplete="off">
+---
+>             <div class="col-4 row align-items-center">      <!-- Easter's shear first line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_xy" step="0.1" autocomplete="off">
+969,971c1158,1160
+<                 <div class="col-4 row">
+<                     <label class="col-2">X.pos:</label>
+<                     <input class="slider col align-self-center" type="range" min="-7" max="7" value="0" id="EasterX" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_yx" step="0.1" autocomplete="off">
+973,975c1162,1178
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">X.pos:</label>
+<                     <input class="slider col" type="range" min="-4.5" max="9.5" value="2.5" id="CarX" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_zx" step="0.1" autocomplete="off">
+>                 </div>  
+>             </div>
+>             <div class="col-4 row align-items-center">      <!-- Car's shear first line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_xy" step="0.1" autocomplete="off">
+>                 </div>
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_yx" step="0.1" autocomplete="off">
+>                 </div>
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_x\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_zx" step="0.1" autocomplete="off">
+978,982c1181,1186
+<                 
+<             <div class="text-white row">
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Y.pos:</label>
+<                     <input class="slider col" type="range" min="-0.7" max="5.3" value="2.3" id="KangarooY" step="0.1" autocomplete="off">
+---
+>         </div>
+>         <div class="row">       <!-- second line shear -->
+>             <div class="col-4 row align-items-center">      <!-- Kangaroo's shear second line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_xz" step="0.1" autocomplete="off">
+984,986c1188,1190
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Y.pos:</label>
+<                     <input class="slider col" type="range" min="-3" max="3" value="0" id="EasterY" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_yz" step="0.1" autocomplete="off">
+988,990c1192,1194
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Y.pos:</label>
+<                     <input class="slider col" type="range" min="-3.2" max="2.8" value="-0.2" id="CarY" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="K_zy" step="0.1" autocomplete="off">
+993,997c1197,1200
+< 
+<             <div class="text-white row">
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Z.pos:</label>
+<                     <input class="slider col" type="range" min="-20" max="0" value="-10" id="KangarooZ" step="0.1" autocomplete="off">
+---
+>             <div class="col-4 row align-items-center">      <!-- Easter's shear second line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_xz" step="0.1" autocomplete="off">
+999,1001c1202,1204
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Z.pos:</label>
+<                     <input class="slider col" type="range" min="-20" max="0" value="-10" id="EasterZ" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_yz" step="0.1" autocomplete="off">
+1003,1005c1206,1208
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Z.pos:</label>
+<                     <input class="slider col" type="range" min="-20" max="0" value="-10" id="CarZ" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="T_zy" step="0.1" autocomplete="off">
+1008,1012c1211,1214
+< 
+<             <div class="text-white row">
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Size:</label>
+<                     <input class="slider col" type="range" min="1" max="8" value="4.5" id="KangarooSize" step="0.1" autocomplete="off">
+---
+>             <div class="col-4 row align-items-center">      <!-- Car's shear second line -->
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^x_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_xz" step="0.1" autocomplete="off">
+1014,1016c1216,1218
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Size:</label>
+<                     <input class="slider col" type="range" min="1" max="3" value="2" id="EasterSize" step="0.01" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^y_z\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_yz" step="0.1" autocomplete="off">
+1018,1020c1220,1222
+<                 <div class="col-4 row align-items-center">
+<                     <label class="col-2">Size:</label>
+<                     <input class="slider col" type="range" min="1" max="8" value="4.5" id="CarSize" step="0.1" autocomplete="off">
+---
+>                 <div class="col-4 row align-items-center no-gutters">
+>                     <label class="co1-4 mx-1">\(SH^z_y\):</label>
+>                     <input class="small_slider col" type="range" min="-2" max="2" value="0" id="C_zy" step="0.1" autocomplete="off">
+1024,1030d1225
+<     </div>
+<     <br/>
+< 
+<             
+< 
+< </div>
+< 
+1031a1227,1228
+>     </div>
+> </font>
